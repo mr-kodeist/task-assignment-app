@@ -1,7 +1,3 @@
--- Fixed set of statuses. A stricter alternative to a plain TEXT column;
--- trade-off is that adding a new status later requires an ALTER TYPE.
-CREATE TYPE task_status AS ENUM ('To-do', 'In Progress', 'Done');
-
 CREATE TABLE developers (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL
@@ -22,7 +18,8 @@ CREATE TABLE developer_skills (
 CREATE TABLE tasks (
   id SERIAL PRIMARY KEY,
   title TEXT NOT NULL,
-  status task_status NOT NULL DEFAULT 'To-do',
+  status VARCHAR(20) NOT NULL DEFAULT 'To-do'
+    CHECK (status IN ('To-do', 'In Progress', 'Done')),
   assignee_id INTEGER REFERENCES developers(id) ON DELETE SET NULL,
   parent_task_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
   created_at TIMESTAMP NOT NULL DEFAULT now()
