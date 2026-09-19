@@ -1,7 +1,7 @@
 # Task Assignment App
 
 A full-stack task assignment application with skill-based routing, recursive subtasks, and LLM-powered skill inference. Built for the Codex Solutions / HTX xDigital take-home assignment.
-![Task List Page](screenshots/task-list.png)
+![Task List Page](docs/screenshots/task-list.png)
 
 ## Tech Stack
 
