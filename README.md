@@ -141,7 +141,45 @@ The Task List page's status and assignee dropdowns apply immediately on selectio
 
 ## Docker (Part 6)
 
-*[To be completed]*
+## Docker (Part 6)
+
+The entire stack — PostgreSQL, backend, and frontend — runs via a single `docker-compose.yml` at the project root.
+
+### Running it
+
+```bash
+docker compose up --build
+```
+
+This single command:
+1. Starts a PostgreSQL 16 container
+2. **Automatically applies the schema and seed data** on first run, via files mounted into `/docker-entrypoint-initdb.d/` (a built-in Postgres image feature — any `.sql` files placed there run automatically, in filename order, the first time the container initializes with an empty data directory)
+3. Builds and starts the backend (Express API) container
+4. Builds and starts the frontend container — a multi-stage build that compiles the React app, then serves the static output via nginx
+
+Once running:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:4000`
+
+### Design notes
+
+- **Backend uses a production build, not the dev server.** The Dockerfile runs `tsc` to compile TypeScript to plain JavaScript once, then runs the compiled output directly with `node` — `ts-node-dev` (used for local development) recompiles on every file change, which is unnecessary overhead inside a container that only needs to run once.
+- **Frontend uses a multi-stage build.** The first stage installs dependencies and runs `npm run build` to produce static files; the second, much smaller stage copies only those static files into an `nginx:alpine` image. The final image doesn't contain Node.js, source code, or `node_modules` — just the compiled output and a minimal web server.
+- **Custom nginx config for client-side routing.** Since the frontend uses `react-router-dom`'s `BrowserRouter`, a direct visit to a route like `/create` needs to be served `index.html` rather than a literal file at that path (which doesn't exist on disk) — `nginx.conf` handles this fallback.
+- **Container-to-container networking uses service names, not `localhost`.** Inside Docker's internal network, the backend reaches PostgreSQL via the hostname `db` (the service name defined in `docker-compose.yml`), not `localhost` — Docker's internal DNS resolves this automatically. This is different from local development, where the backend connects to Postgres via `localhost:5432` since the database is reached through its published port from outside the container.
+- **`ANTHROPIC_API_KEY` is injected via a root-level `.env` file** (not committed — see `.gitignore`), which Docker Compose automatically reads for variable substitution in `docker-compose.yml`.
+
+### Note on Docker vs. local dev workflow
+
+The `docker compose` setup builds static snapshots of the frontend and backend — it does **not** hot-reload when source files change, unlike `npm run dev`. If you're actively developing, running the backend and frontend locally via `npm run dev` (as described above) gives immediate feedback. If you want to verify changes through the full Dockerized stack, rebuild the specific service after making changes:
+
+```bash
+docker compose up --build frontend
+# or
+docker compose up --build backend
+```
+
+This project was primarily developed against the local `npm run dev` servers, with Docker used to validate the final, fully-containerized deliverable required by Part 6 of the brief.
 
 ## Environment Variables
 
