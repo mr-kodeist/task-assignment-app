@@ -99,7 +99,7 @@ export default function TaskListPage() {
       <h1>Tasks</h1>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ textAlign: 'left', borderBottom: '2px solid #333' }}>
+          <tr style={{ textAlign: 'left', borderBottom: '2px solid #d1d5db' }}>
             <th>Task Title</th>
             <th>Skills</th>
             <th>Status</th>
