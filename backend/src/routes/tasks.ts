@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../db';
+import { inferSkillsFromTitle } from '../llm';
 
 const router = Router();
 
@@ -56,15 +57,25 @@ router.post('/', async (req, res) => {
   );
   const taskId = result.rows[0].id;
 
-  if (skillIds && skillIds.length > 0) {
-    for (const skillId of skillIds) {
-      await pool.query(
-        'INSERT INTO task_skills (task_id, skill_id) VALUES ($1, $2)',
-        [taskId, skillId]
-      );
-    }
+  let finalSkillIds: number[] = skillIds ?? [];
+
+  if (finalSkillIds.length === 0) {
+    // No skills specified by the user — infer them from the title using the LLM
+    const allSkills = await pool.query('SELECT id, name FROM skills');
+    const skillNames = allSkills.rows.map((s) => s.name);
+
+    const inferredNames = await inferSkillsFromTitle(title, skillNames);
+    finalSkillIds = allSkills.rows
+      .filter((s) => inferredNames.includes(s.name))
+      .map((s) => s.id);
   }
-  // Note: if skillIds is empty/omitted, Part 5 (LLM skill inference) hooks in here later
+
+  for (const skillId of finalSkillIds) {
+    await pool.query(
+      'INSERT INTO task_skills (task_id, skill_id) VALUES ($1, $2)',
+      [taskId, skillId]
+    );
+  }
 
   const task = await getTaskWithDetails(taskId);
   res.status(201).json(task);
