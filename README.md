@@ -84,6 +84,18 @@ npm run dev
 ```
 Runs on `http://localhost:5173`.
 
+### Note on Docker vs. local dev workflow
+
+The `docker compose` setup builds static snapshots of the frontend and backend — it does **not** hot-reload when source files change, unlike `npm run dev`. If you're actively developing, running the backend and frontend locally via `npm run dev` (as described above) gives immediate feedback. If you want to verify changes through the full Dockerized stack, rebuild the specific service after making changes:
+
+```bash
+docker compose up --build frontend
+# or
+docker compose up --build backend
+```
+
+This project was primarily developed against the local `npm run dev` servers, with Docker used to validate the final, fully-containerized deliverable required by Part 6 of the brief.
+
 ## API Endpoints
 
 | Method | Endpoint             | Description                                      |
@@ -113,6 +125,9 @@ The LLM is only used as a fallback — if the user doesn't specify skills for a 
 
 ### Frontend: client-side filtering as UX, not as enforcement
 The Task List page's assignee dropdown only shows developers who already have all the skills a task requires. This is a UX convenience to prevent an invalid selection from being attempted in the first place — the actual enforcement still happens in the backend API, since frontend validation alone is never sufficient for a real business rule.
+
+### Auto-save on the List page, explicit Save on the Creation page
+The Task List page's status and assignee dropdowns apply immediately on selection, with no separate "Save" button — this matches the wireframe in the brief, which shows these as plain inline dropdowns with no confirm action alongside them. The Task Creation page, by contrast, uses an explicit Save button, since it involves assembling a potentially deep tree of subtasks before anything should be committed — batching those into one save avoids partial/inconsistent state if the user is still mid-edit.
 
 ## Libraries Used
 
